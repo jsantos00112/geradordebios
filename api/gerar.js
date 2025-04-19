@@ -1,4 +1,6 @@
-export default async function handler(req, res) {
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ erro: "Método não permitido" });
   }
@@ -53,4 +55,6 @@ export default async function handler(req, res) {
     res.status(200).json({ texto: dados.choices[0].message.content });
   } catch (err) {
     console.error("Erro ao gerar bio:", err.message);
-    res.status(500).json({ erro: "Erro ao gerar bio",
+    res.status(500).json({ erro: "Erro ao gerar bio", detalhe: err.message });
+  }
+};
