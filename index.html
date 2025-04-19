@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gerador de Bio</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+    input, select, textarea, button { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
+    .result { background: #fff; padding: 10px; margin-top: 20px; border-radius: 5px; white-space: pre-line; }
+  </style>
+</head>
+<body>
+  <h1>🎯 Gerador de Bio para Redes Sociais</h1>
+  <p>Descreva você em poucas palavras e veja sua bio pronta!</p>
+
+  <input type="text" id="nome" placeholder="Seu nome (opcional)" />
+  <textarea id="sobre" placeholder="Fale um pouco sobre você..."></textarea>
+  <select id="tom">
+    <option value="casual">Casual</option>
+    <option value="engraçado">Engraçado</option>
+    <option value="profissional">Profissional</option>
+    <option value="misterioso">Misterioso</option>
+  </select>
+  <button onclick="gerarBio()">Gerar Bio</button>
+
+  <div id="resultado" class="result"></div>
+
+  <script>
+    async function gerarBio() {
+      const nome = document.getElementById("nome").value;
+      const sobre = document.getElementById("sobre").value;
+      const tom = document.getElementById("tom").value;
+
+      const resposta = await fetch("/api/gerar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nome, sobre, tom })
+      });
+
+      const dados = await resposta.json();
+      console.log("Resposta da API:", dados);
+      document.getElementById("resultado").innerText = dados.texto;
+    }
+  </script>
+</body>
+</html>
