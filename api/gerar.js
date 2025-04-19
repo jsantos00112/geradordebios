@@ -1,6 +1,5 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    console.log("Método não permitido.");
     return res.status(405).json({ erro: "Método não permitido" });
   }
 
@@ -11,7 +10,6 @@ export default async function handler(req, res) {
       body = JSON.parse(body);
     }
   } catch (e) {
-    console.log("Erro ao parsear o corpo da requisição:", e.message);
     return res.status(400).json({ erro: "JSON inválido" });
   }
 
@@ -19,51 +17,40 @@ export default async function handler(req, res) {
 
   console.log("Dados recebidos:", { nome, sobre, tom });
 
-  const prompt = `
-Crie 3 versões criativas e curtas de bio para redes sociais com base nas informações abaixo:
-
-Nome: ${nome}
-Sobre a pessoa: ${sobre}
-Tom desejado: ${tom}
-
-Use emojis apenas se for apropriado ao tom. Máximo 150 caracteres por bio.
-  `;
-
   try {
-    console.log("Enviando requisição para a OpenAI...");
-
-    const resposta = await fetch("https://api.openai.com/v1/completions", {
+    const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "text-davinci-003",
-        prompt: prompt,
-        max_tokens: 150,
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "Você é um assistente criativo que escreve bios curtas para redes sociais. Use no máximo 150 caracteres e emojis se o tom permitir.",
+          },
+          {
+            role: "user",
+            content: `Nome: ${nome}\nSobre: ${sobre}\nTom desejado: ${tom}`,
+          },
+        ],
+        max_tokens: 200,
         temperature: 0.8,
       }),
     });
 
-    if (!resposta.ok) {
-      console.log("Erro na requisição para a OpenAI. Status:", resposta.status);
-      return res.status(500).json({ erro: "Erro ao chamar a OpenAI" });
-    }
-
-    console.log("Resposta da OpenAI recebida. Status:", resposta.status);
+    console.log("Status da resposta OpenAI:", resposta.status);
 
     const dados = await resposta.json();
-    console.log("Dados da resposta da OpenAI:", dados);
+    console.log("Resposta da OpenAI:", dados);
 
-    if (!dados.choices || !dados.choices[0]?.text) {
-      console.log("Resposta da OpenAI não contém o campo 'choices'.");
+    if (!dados.choices || !dados.choices[0]?.message?.content) {
       return res.status(500).json({ erro: "Resposta inválida da OpenAI", dados });
     }
 
-    res.status(200).json({ texto: dados.choices[0].text });
+    res.status(200).json({ texto: dados.choices[0].message.content });
   } catch (err) {
-    console.error("Erro ao processar a requisição:", err.message);
-    res.status(500).json({ erro: "Erro ao gerar bio", detalhe: err.message });
-  }
-}
+    console.error("Erro ao gerar bio:", err.message);
+    res.status(500).json({ erro: "Erro ao gerar bio",
